@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,16 +7,21 @@ public class PlayerController : MonoBehaviour
 {
 	public float speed;
 	public LayerMask blocks;
+	public LayerMask selectable;
+	public KeyCode up;
+	public KeyCode down;
+	public KeyCode left;
+	public KeyCode right;
+	public KeyCode select;
 
+	public float selectOffset;
+	public float selectRadius;
 	
 	Vector2 moveDirection;
 	Animator anim;
 	
 	
-	public KeyCode up;
-	public KeyCode down;
-	public KeyCode left;
-	public KeyCode right;
+
 	
 
 
@@ -30,10 +36,14 @@ public class PlayerController : MonoBehaviour
 	Rigidbody2D rb2;
 	
 	float ROOT2;
-	Action[] states;
+	Dictionary<string,Action> states; // need to have namespace system
+	string nextState;
 	// Use this for initialization
 	void Start () 
 	{
+		states = new Dictionary<string,Action>();
+		states["Default"] = Default;
+		nextState = "Default";
 		col = GetComponent<BoxCollider2D>();
 		anim = GetComponent<Animator>();
 		hits = new RaycastHit2D[8];
@@ -45,9 +55,34 @@ public class PlayerController : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+		states[nextState]();
+	}
+
+//states
+	void Default()
+	{
+		nextState = "Default";
 		SetMoveDirection();
+		CheckInput();
 		TryMove();
 	}
+//------------------------------------------------------------------------------------//
+
+//input things
+	void CheckInput() // should be called using the raw input, so only directly after set move direction.
+	{
+		if(Input.GetKeyDown(select))
+		{
+			Collider2D toSelect = Physics2D.OverlapCircle(v2(transform.position) + new Vector2(FaceX,FaceY)*selectOffset,
+				selectRadius,selectable);
+			if(toSelect != null)
+				toSelect.gameObject.GetComponent<Behavior>().Do();
+		}
+	}
+
+
+// movement methods
+//-----------------------------------------------------------------------------------//
 
 	void SetMoveDirection()
 	{
@@ -62,7 +97,7 @@ public class PlayerController : MonoBehaviour
 	// do 8 raycasts around you, then when you move, check if the appropriate raycast has collided. 
 	// if it has, dont move in that direction. 
 	// 0: top. 1: top right 2:right 3:bot right 4:bot etc.
-	void ScanSurroundings()//starting from the center of the box collider, check in all 8 directions.
+	void ScanSurroundings()
 	{
 		Vector2 center = col.offset + v2(transform.position);
 		float width = col.size.x;
@@ -77,12 +112,6 @@ public class PlayerController : MonoBehaviour
 		hits[6] = Physics2D.Linecast(center,center + new Vector2(-1,0)*width,blocks);
 		hits[7] = Physics2D.Linecast(center,center + new Vector2(-ROOT2,ROOT2)*diag,blocks);
 	}
-	//thinking i should basically write a wrapper for transform.
-	// take : a direction and magnitude to move
-	// return : a direction and magnitude that you moved, if you did. 0,0 for both if you didnt.
-	// as for the movement algorithm : determine that you cant move if you have 1 contact normal and 
-	// the dot product is -1. 
-
 
 	void TryMove()
 	{
@@ -185,6 +214,9 @@ public class PlayerController : MonoBehaviour
 		}
 	}
 
+
+//nice to haves
+//---------------------------------------------------------------------------------------------//
 	Vector2 v2(Vector3 v3)
 	{
 		return new Vector2(v3.x,v3.y);
@@ -195,5 +227,10 @@ public class PlayerController : MonoBehaviour
 		return new Vector3(v2.x,v2.y,0);
 	}
 
+	void OnDrawGizmosSelected()
+	{
+		Gizmos.color = Color.green;
+		Gizmos.DrawWireSphere(v2(transform.position) + moveDirection*selectOffset,selectRadius);
+	}
 	
 }
