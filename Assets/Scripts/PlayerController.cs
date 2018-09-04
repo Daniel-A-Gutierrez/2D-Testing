@@ -5,9 +5,10 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
 	public float speed;
+	public LayerMask blocks;
+
 	
-	
-	Vector3 moveDirection;
+	Vector2 moveDirection;
 	Animator anim;
 	
 	
@@ -16,21 +17,28 @@ public class PlayerController : MonoBehaviour
 	public KeyCode left;
 	public KeyCode right;
 	
+
+
 	int xAxis;
 	int yAxis;
-	int FaceX;
-	int FaceY;
+	float FaceX;
+	float FaceY;
 
-	Collider2D col;
-	ContactPoint2D[] contacts;
+	BoxCollider2D col;
+	RaycastHit2D[] hits;
 	int numContacts;
-
+	Rigidbody2D rb2;
+	
+	float ROOT2;
+	Action[] states;
 	// Use this for initialization
 	void Start () 
 	{
 		col = GetComponent<BoxCollider2D>();
 		anim = GetComponent<Animator>();
-		contacts = new ContactPoint2D[16];
+		hits = new RaycastHit2D[8];
+		rb2 = GetComponent<Rigidbody2D>();
+		ROOT2 = Mathf.Sqrt(2);
 
 	}
 	
@@ -38,7 +46,7 @@ public class PlayerController : MonoBehaviour
 	void Update ()
 	{
 		SetMoveDirection();
-		Move();
+		TryMove();
 	}
 
 	void SetMoveDirection()
@@ -51,35 +59,129 @@ public class PlayerController : MonoBehaviour
 		yAxis -= (Input.GetKey(down)) ? 1 : 0;
 		moveDirection = new Vector2(xAxis,yAxis).normalized;
 	}
-
-	void Move()
+	// do 8 raycasts around you, then when you move, check if the appropriate raycast has collided. 
+	// if it has, dont move in that direction. 
+	// 0: top. 1: top right 2:right 3:bot right 4:bot etc.
+	void ScanSurroundings()//starting from the center of the box collider, check in all 8 directions.
 	{
-		if (xAxis == 0 & yAxis == 0) {anim.Play("IDLE");}
-		else
-		{ 
-			anim.Play("WALK");
+		Vector2 center = col.offset + v2(transform.position);
+		float width = col.size.x;
+		float height = col.size.y;
+		float diag = col.size.magnitude/4;
+		hits[0] = Physics2D.Linecast(center,center + new Vector2(0,1)*height,blocks);
+		hits[1] = Physics2D.Linecast(center,center + new Vector2(ROOT2,ROOT2)*diag,blocks);
+		hits[2] = Physics2D.Linecast(center,center + new Vector2(1,0)*width,blocks);
+		hits[3] = Physics2D.Linecast(center,center + new Vector2(ROOT2,-ROOT2)*diag,blocks);
+		hits[4] = Physics2D.Linecast(center,center + new Vector2(0,-1)*height,blocks);
+		hits[5] = Physics2D.Linecast(center,center + new Vector2(-ROOT2,-ROOT2)*diag,blocks);
+		hits[6] = Physics2D.Linecast(center,center + new Vector2(-1,0)*width,blocks);
+		hits[7] = Physics2D.Linecast(center,center + new Vector2(-ROOT2,ROOT2)*diag,blocks);
+	}
+	//thinking i should basically write a wrapper for transform.
+	// take : a direction and magnitude to move
+	// return : a direction and magnitude that you moved, if you did. 0,0 for both if you didnt.
+	// as for the movement algorithm : determine that you cant move if you have 1 contact normal and 
+	// the dot product is -1. 
+
+
+	void TryMove()
+	{
+
+		anim.SetFloat("FaceX",FaceX);
+		anim.SetFloat("FaceY",FaceY);
+		if (xAxis == 0 & yAxis == 0) //if not moving or putting input, play Idle.
+		{
+			anim.Play("IDLE");
+		}
+		else 
+		{
+			
+			Vector2 inputDir = moveDirection;
+			moveDirection = Obstruct(moveDirection);
+			Vector2 translation = moveDirection * Time.deltaTime * speed;
 			FaceX = xAxis;
 			FaceY = yAxis;
-			anim.SetFloat("FaceX",FaceX);
-			anim.SetFloat("FaceY",FaceY);
+			if(moveDirection == new Vector2(0,0))
+			{
+				anim.Play("IDLE");
+			}
+			else //player is unobstructed
+			{
+				anim.Play("WALK");
+				if(moveDirection!=inputDir)
+				{
+					FaceX = moveDirection.x;
+					FaceY = moveDirection.y;
+				}
+			}
+
+			
+			transform.Translate(translation);
 		}
-		HandleWalls();
-		transform.position += moveDirection*speed*Time.deltaTime;
 	}
 
-	void OnCollisionStay2D(Collision2D collision)
+	Vector2 Obstruct(Vector2 movedir) //takes move direction and outputs a valid one based on scan surroundings
 	{
-		numContacts = collision.GetContacts(contacts) -1 ;
-	}
+		ScanSurroundings();//for now im only going to consider the four cardinal directions
+		if(hits[0].collider != null & movedir.y>0){movedir.y += Vector2.Dot(movedir,hits[0].normal.normalized);}
+		if(hits[2].collider != null & movedir.x>0){movedir.x += Vector2.Dot(movedir,hits[2].normal.normalized);}
+		if(hits[4].collider != null & movedir.y<0){movedir.y -= Vector2.Dot(movedir,hits[4].normal.normalized);}
+		if(hits[6].collider != null & movedir.x<0){movedir.x -= Vector2.Dot(movedir,hits[6].normal.normalized);}
 
-	void HandleWalls()
-	{
-
-		for (;numContacts>=0;numContacts--)
+		if(hits[0].collider == null)
 		{
-			Vector3 norm = v3(contacts[numContacts].normal).normalized;
-			moveDirection -= norm*Vector3.Dot(moveDirection,norm);
-			print(moveDirection);
+			if(hits[2].collider == null)
+			{
+				if(hits[1].collider != null)
+				{
+					if(movedir.x > 0 & movedir.y > 0)
+					{
+						movedir *=0;
+					}
+				}
+			}
+			if(hits[6].collider == null)
+			{
+				if(hits[7].collider != null)
+				{
+					if(movedir.x<0 & movedir.y > 0)
+					{
+						movedir *=0;
+					}
+				}
+			}
+		}
+		if(hits[4].collider == null)
+		{
+			if(hits[2].collider == null)
+			{
+				if(hits[3].collider != null)
+				{
+					if(movedir.x>0 & movedir.y < 0)
+					{
+						movedir *=0;
+					}
+				}
+			}
+			if(hits[6].collider == null)
+			{
+				if(hits[5].collider != null)
+				{
+					if(movedir.x<0 & movedir.y<0)
+					{
+						movedir *=0;
+					}
+				}
+			}
+		}
+		//print(hits[0].normal.x);
+		if(movedir.magnitude <.01f)
+		{
+			return new Vector2(0,0);
+		}
+		else
+		{
+			return movedir.normalized;
 		}
 	}
 
@@ -92,4 +194,6 @@ public class PlayerController : MonoBehaviour
 	{
 		return new Vector3(v2.x,v2.y,0);
 	}
+
+	
 }
