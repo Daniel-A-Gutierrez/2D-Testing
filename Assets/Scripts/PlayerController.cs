@@ -3,11 +3,15 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class PlayerController : MonoBehaviour
 {
 	public float speed;
 	public LayerMask blocks;
 	public LayerMask selectable;
+	public LayerMask hittable;
+	public float hitBoxWidth;
+	public float hitBoxHeight;
 	public KeyCode up;
 	public KeyCode down;
 	public KeyCode left;
@@ -19,11 +23,11 @@ public class PlayerController : MonoBehaviour
 	
 	Vector2 moveDirection;
 	Animator anim;
-	
-	
 
-	
-
+	GameManager.GameData gameData;
+	GameManager gameManager ;
+	[HideInInspector]
+	public PlayerData playerData; 
 
 	int xAxis;
 	int yAxis;
@@ -33,29 +37,37 @@ public class PlayerController : MonoBehaviour
 	BoxCollider2D col;
 	RaycastHit2D[] hits;
 	int numContacts;
-	Rigidbody2D rb2;
 	
 	float ROOT2;
 	Dictionary<string,Action> states; // need to have namespace system
 	string nextState;
 	// Use this for initialization
+	void Awake()
+	{
+		DontDestroyOnLoad(this);
+	}
 	void Start () 
 	{
 		states = new Dictionary<string,Action>();
 		states["Default"] = Default;
+		states["Attacking"] = Attacking;
 		nextState = "Default";
 		col = GetComponent<BoxCollider2D>();
 		anim = GetComponent<Animator>();
 		hits = new RaycastHit2D[8];
-		rb2 = GetComponent<Rigidbody2D>();
 		ROOT2 = Mathf.Sqrt(2);
-
+		gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
+		gameData = gameManager.gameData;
+		playerData = gameData.playerData;
+		print(gameData);
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
+		Track();
 		states[nextState]();
+		//print(anim.GetCurrentAnimatorStateInfo(0).nameHash);
 	}
 
 //states
@@ -66,7 +78,29 @@ public class PlayerController : MonoBehaviour
 		CheckInput();
 		TryMove();
 	}
+
+	void Attacking()
+	{
+		//basically you cant do anything while attacking.
+		//with this setup it would be possible to make anim cancelling possible after hitframe ends.
+		if(anim.GetCurrentAnimatorStateInfo(0).IsName("IDLE"))
+		{
+			nextState = "Default";
+		}
+		Hit();
+	}
+//serialization things
 //------------------------------------------------------------------------------------//
+	void Track()
+	{
+		gameData.playTime += Time.deltaTime;
+		playerData.positionX = transform.position.x;
+		playerData.positionY = transform.position.y;
+		playerData.positionZ = transform.position.z;
+		gameData.Scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+		//anything else you want to save
+	}
+//-----------------------------------------------------------------------------------//
 
 //input things
 	void CheckInput() // should be called using the raw input, so only directly after set move direction.
@@ -77,6 +111,22 @@ public class PlayerController : MonoBehaviour
 				selectRadius,selectable);
 			if(toSelect != null)
 				toSelect.gameObject.GetComponent<Behavior>().Do();
+		}
+		if(Input.GetKeyDown(KeyCode.Space))
+		{
+			
+			if (!anim.GetCurrentAnimatorStateInfo(0).IsName("ATK"))
+			{
+				anim.Play("ATK");
+				Attacking();
+				nextState = "Attacking";
+			}
+		}
+		if(Input.GetKeyDown(KeyCode.P))
+		{
+			print("Saving...");
+			print(gameManager);
+			gameManager.Save(gameData);
 		}
 	}
 
@@ -151,7 +201,7 @@ public class PlayerController : MonoBehaviour
 
 	Vector2 Obstruct(Vector2 movedir) //takes move direction and outputs a valid one based on scan surroundings
 	{
-		ScanSurroundings();//for now im only going to consider the four cardinal directions
+		ScanSurroundings();
 		if(hits[0].collider != null & movedir.y>0){movedir.y += Vector2.Dot(movedir,hits[0].normal.normalized);}
 		if(hits[2].collider != null & movedir.x>0){movedir.x += Vector2.Dot(movedir,hits[2].normal.normalized);}
 		if(hits[4].collider != null & movedir.y<0){movedir.y -= Vector2.Dot(movedir,hits[4].normal.normalized);}
@@ -203,7 +253,6 @@ public class PlayerController : MonoBehaviour
 				}
 			}
 		}
-		//print(hits[0].normal.x);
 		if(movedir.magnitude <.01f)
 		{
 			return new Vector2(0,0);
@@ -217,12 +266,12 @@ public class PlayerController : MonoBehaviour
 
 //nice to haves
 //---------------------------------------------------------------------------------------------//
-	Vector2 v2(Vector3 v3)
+	public Vector2 v2(Vector3 v3)
 	{
 		return new Vector2(v3.x,v3.y);
 	}
 
-	Vector3 v3(Vector2 v2)
+	public Vector3 v3(Vector2 v2)
 	{
 		return new Vector3(v2.x,v2.y,0);
 	}
@@ -231,6 +280,54 @@ public class PlayerController : MonoBehaviour
 	{
 		Gizmos.color = Color.green;
 		Gizmos.DrawWireSphere(v2(transform.position) + moveDirection*selectOffset,selectRadius);
+		Gizmos.DrawWireCube(v2(transform.position) + new Vector2(0,-1) * hitBoxHeight, new Vector3(1,1,1) * hitBoxHeight);
+	}
+
+
+
+	// hit frame animations for animation events
+	/*------------------------------------------------------------------------------- */
+	List<GameObject> slapped;
+	bool hitFrames = false;
+	
+	public void ActivateHitFrames()
+	{
+		slapped = new List<GameObject>();
+		hitFrames = true;
+	}
+
+	public void DeactivateHitFrames()
+	{
+		hitFrames = false;
+	}
+
+	public void EndAttackAnim()
+	{
+		nextState = "Default";
+		anim.Play("IDLE");//dont call the default method bc it causes an error if both this and get key down in check input are
+		//called on the same frame.
+	}
+
+
+	void Hit()
+	{
+		if(hitFrames)
+		{	
+			Vector2 FaceDir = new Vector2(FaceX,FaceY);
+			Collider2D[] cols = Physics2D.OverlapBoxAll(transform.position + v3(FaceDir) * hitBoxHeight/2,
+				 new Vector2(hitBoxHeight,hitBoxWidth) , Mathf.Atan2(FaceDir.y,FaceDir.x), hittable );
+			foreach(Collider2D col in cols)
+			{
+				// if its in the hittable layer handle taht somehow
+				//if it hasnt already been hit
+				if(!slapped.Contains(col.gameObject))
+				{
+					slapped.Add(col.gameObject);
+					print("hit");
+				}
+			}
+			
+		}
 	}
 	
 }

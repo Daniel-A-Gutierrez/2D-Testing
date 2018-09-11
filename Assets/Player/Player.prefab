@@ -122,10 +122,16 @@ MonoBehaviour:
   blocks:
     serializedVersion: 2
     m_Bits: 256
+  selectable:
+    serializedVersion: 2
+    m_Bits: 512
   up: 119
   down: 115
   left: 97
   right: 100
+  select: 32
+  selectOffset: 0.5
+  selectRadius: 0.2
 --- !u!212 &212597679854052840
 SpriteRenderer:
   m_ObjectHideFlags: 1
