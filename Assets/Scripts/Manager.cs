@@ -65,7 +65,6 @@ public class Manager : MonoBehaviour
 	{
 		Data d = new Data();
 		BinaryFormatter bf = new BinaryFormatter();
-		string path2 = path.Replace('/','\\');
 		FileStream file = File.Open(path,FileMode.Open);
 		d = (Data)bf.Deserialize(file);
 		file.Close();

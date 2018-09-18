@@ -16,7 +16,7 @@ public class GameManager : Manager
 	public bool loadOnStart; */
 	//[HideInInspector]
 	public GameData gameData;
-
+	public string newGameDirectory;
 	//thinking how this is gonna work with a main menu
 	//main menu maybe has new game, continue, and options. worry about options later.
 	//continue: simply instantiate the manager object and call one of its methods - maybe load the scene. 
@@ -25,10 +25,8 @@ public class GameManager : Manager
 
 	// OVERRIDE THIS
 
-	//so plan. i need to create a save file and load it. the save file needs to contain the player. it needs to be saved by this script.
-	//so open up a scene, create this object and assign values, create a way for the player to save the scene, save it, change the path
-	// and save it in a different save file - lets call it 'new game',  open up the menu,
-	//create a way to load it, 
+	//ok so i need to ask the player their name and set that as the save file directory name. 
+	//so menu loads, u go to new game, it asks ur name, u give it one and hit enter, loads a file at a predetermined directory and sets the game managers 'path' to 
 
 	void Awake()//this class absolutely must be instantiated first, and absolutely be before player. set up any references that must be done on start . this is only 
 	//really necessary if youre starting the scene without any player shit made up already. 
@@ -51,7 +49,11 @@ public class GameManager : Manager
 
 	}
 	
-
+	public void SetPath(string name)//should be called after new game is loaded so that the new path is not overridden. 
+	{
+		path = Application.dataPath +"/Resources/Saves/" + name;
+		gameData.playerData.Name = name;
+	}
 
 	public void NewGame()
 	{

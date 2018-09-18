@@ -152,7 +152,7 @@ public class PlayerController : MonoBehaviour
 		Vector2 center = col.offset + v2(transform.position);
 		float width = col.size.x;
 		float height = col.size.y;
-		float diag = col.size.magnitude/4;
+		float diag = (width>=height) ? ROOT2*height/2 : ROOT2*width/2; // length of a 45 degree line drawn from center to border. 
 		hits[0] = Physics2D.Linecast(center,center + new Vector2(0,1)*height,blocks);
 		hits[1] = Physics2D.Linecast(center,center + new Vector2(ROOT2,ROOT2)*diag,blocks);
 		hits[2] = Physics2D.Linecast(center,center + new Vector2(1,0)*width,blocks);
@@ -303,6 +303,7 @@ public class PlayerController : MonoBehaviour
 
 	public void EndAttackAnim()
 	{
+		//for handling interrupts maybe check that the current state is still attacking before running these lines? 
 		nextState = "Default";
 		anim.Play("IDLE");//dont call the default method bc it causes an error if both this and get key down in check input are
 		//called on the same frame.
