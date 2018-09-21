@@ -51,6 +51,7 @@ public class PlayerController : MonoBehaviour
 		states = new Dictionary<string,Action>();
 		states["Default"] = Default;
 		states["Attacking"] = Attacking;
+		states["Transitioning"] = Transitioning;
 		nextState = "Default";
 		col = GetComponent<BoxCollider2D>();
 		anim = GetComponent<Animator>();
@@ -59,7 +60,6 @@ public class PlayerController : MonoBehaviour
 		gameManager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 		gameData = gameManager.gameData;
 		playerData = gameData.playerData;
-		print(gameData);
 	}
 	
 	// Update is called once per frame
@@ -88,6 +88,30 @@ public class PlayerController : MonoBehaviour
 			nextState = "Default";
 		}
 		Hit();
+	}
+
+	public float transitionDuration = 1;
+	public float startTime;
+	public bool firstFrameTransitioning = true;
+
+	public void Transitioning()
+	{
+		if(firstFrameTransitioning)
+		{
+			anim.Play("IDLE");
+			startTime = Time.time;
+			nextState = "Transitioning";
+			firstFrameTransitioning = false;
+		}
+		else
+		{
+			if(Time.time- startTime > transitionDuration)
+			{
+				nextState= "Default";
+				startTime = 0;
+				firstFrameTransitioning = true;
+			}
+		}
 	}
 //serialization things
 //------------------------------------------------------------------------------------//
@@ -125,7 +149,6 @@ public class PlayerController : MonoBehaviour
 		if(Input.GetKeyDown(KeyCode.P))
 		{
 			print("Saving...");
-			print(gameManager);
 			gameManager.Save(gameData);
 		}
 	}

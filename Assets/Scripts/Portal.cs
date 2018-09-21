@@ -8,11 +8,12 @@ public class Portal : MonoBehaviour {
 	public Vector2 position;
 
 	GameObject player;
-	GameObject manager;
+	GameManager manager;
 	// Use this for initialization
 	void Start () 
 	{
 		player = GameObject.FindGameObjectWithTag("Player");
+		manager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
 		//no managers exist yet
 	}
 
@@ -30,11 +31,19 @@ public class Portal : MonoBehaviour {
 		SceneManager.LoadSceneAsync(Destination);
 	}
 
+	IEnumerator FadeOut() // fade out is handled by doors, fade in is handled by game Managers.
+	{
+		manager.UIAnim.Play("FadeToBlack");
+		player.GetComponent<PlayerController>().Transitioning();
+		yield return new WaitForSeconds(manager.fadeInTime);
+		Travel();
+	}
+
 	void OnTriggerEnter2D(Collider2D col)
 	{
 		if(col.gameObject.tag == "Player")
 		{
-			Travel();
+			StartCoroutine("FadeOut");
 			//save scene
 		}
 	}

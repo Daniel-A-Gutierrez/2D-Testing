@@ -17,6 +17,10 @@ public class GameManager : Manager
 	//[HideInInspector]
 	public GameData gameData;
 	public string newGameDirectory;
+	[HideInInspector]
+	public Animator UIAnim;
+	[HideInInspector]
+	public float fadeInTime;
 	//thinking how this is gonna work with a main menu
 	//main menu maybe has new game, continue, and options. worry about options later.
 	//continue: simply instantiate the manager object and call one of its methods - maybe load the scene. 
@@ -34,7 +38,9 @@ public class GameManager : Manager
 		DontDestroyOnLoad(this);
 		gameData = new GameData();		
 		path = Application.dataPath + "/Resources/Saves/" +path;
-
+		UIAnim = transform.Find("Canvas").transform.Find("Panel").GetComponent<Animator>();
+		SceneManager.sceneLoaded += OnSceneLoad;
+		fadeInTime = UIAnim.GetCurrentAnimatorStateInfo(0).length;
 		//if there is no player in the scene, spawn one at 0,0. useful for setting up new saves.
 		if(autoLoadPlayer)
 		{
@@ -48,6 +54,12 @@ public class GameManager : Manager
 		}
 
 	}
+
+	void OnSceneLoad(Scene scene, LoadSceneMode mode)
+	{
+		UIAnim.Play("FadeIn");
+		Time.timeScale = 1;
+	}
 	
 	public void SetPath(string name)//should be called after new game is loaded so that the new path is not overridden. 
 	{
@@ -57,6 +69,12 @@ public class GameManager : Manager
 
 	public void NewGame()
 	{
+		string newGameDirectory = Application.dataPath +"/Resources/Saves/" + "New Game"; // this is hardcoded for now, fix later
+		print("Fix the hard coded new game");
+		string b = path;
+		path = newGameDirectory;
+		Continue("New Game");
+		path = b;
 		//load predetermined save file.
 		//reestablish link to player.
 		//new game can be used for testing for now.
@@ -86,7 +104,6 @@ public class GameManager : Manager
 	{
 		GameData d = new GameData();
 		BinaryFormatter bf = new BinaryFormatter();
-		string path2 = path.Replace('/','\\');
 		FileStream file = File.Open(path,FileMode.Open);
 		d = (GameData)bf.Deserialize(file);
 		file.Close();
