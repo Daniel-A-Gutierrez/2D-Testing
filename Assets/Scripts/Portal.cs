@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class Portal : MonoBehaviour {
 	public string Destination;
 	public Vector2 position;
+	public Vector2 Face;
 
 	GameObject player;
 	GameManager manager;
@@ -14,7 +15,6 @@ public class Portal : MonoBehaviour {
 	{
 		player = GameObject.FindGameObjectWithTag("Player");
 		manager = GameObject.FindGameObjectWithTag("GameManager").GetComponent<GameManager>();
-		//no managers exist yet
 	}
 
 	void Update()
@@ -28,6 +28,11 @@ public class Portal : MonoBehaviour {
 	void Travel()
 	{
 		player.transform.position = new Vector3(position.x,position.y,0);
+		if(Face.magnitude != 0 & Face != null) 
+		{
+			player.GetComponent<PlayerController>().FaceX = Face.x;
+			player.GetComponent<PlayerController>().FaceY = Face.y;
+		}
 		SceneManager.LoadSceneAsync(Destination);
 	}
 

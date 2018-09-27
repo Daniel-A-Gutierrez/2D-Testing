@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 
 [Serializable()]
-public class UnitData : Manager.Data
+public class UnitData
 {
 	float unitPositionX;
 	float unitPositionY;

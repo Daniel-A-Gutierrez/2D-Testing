@@ -4,7 +4,7 @@ using System; // you need to import this to serialize objects
 using UnityEngine;
 
 [Serializable()]
-public class PlayerData : Manager.Data
+public class PlayerData 
 {
 	public float positionX;
 	public float positionY;

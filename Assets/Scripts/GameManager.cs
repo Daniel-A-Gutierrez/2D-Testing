@@ -6,14 +6,14 @@ using System.IO;
 using System;
 using UnityEngine.SceneManagement;
 
-public class GameManager : Manager
+public class GameManager : MonoBehaviour
 {	
-	/*public GameObject playerPrefab;
+	public GameObject playerPrefab;
 	GameObject player;
-	[HideInInspector]
-	
 	public string path;
-	public bool loadOnStart; */
+	public bool loadOnStart; 
+	public bool autoLoadPlayer;
+
 	//[HideInInspector]
 	public GameData gameData;
 	public string newGameDirectory;
@@ -32,8 +32,7 @@ public class GameManager : Manager
 	//ok so i need to ask the player their name and set that as the save file directory name. 
 	//so menu loads, u go to new game, it asks ur name, u give it one and hit enter, loads a file at a predetermined directory and sets the game managers 'path' to 
 
-	void Awake()//this class absolutely must be instantiated first, and absolutely be before player. set up any references that must be done on start . this is only 
-	//really necessary if youre starting the scene without any player shit made up already. 
+	void Awake()//this class absolutely must be instantiated first, and absolutely be before player. set up any references that must be done on start .
 	{
 		DontDestroyOnLoad(this);
 		gameData = new GameData();		
@@ -58,7 +57,6 @@ public class GameManager : Manager
 	void OnSceneLoad(Scene scene, LoadSceneMode mode)
 	{
 		UIAnim.Play("FadeIn");
-		Time.timeScale = 1;
 	}
 	
 	public void SetPath(string name)//should be called after new game is loaded so that the new path is not overridden. 
@@ -100,7 +98,7 @@ public class GameManager : Manager
 		file.Close();
 	}
 
-	public new GameData Load()
+	public GameData Load()
 	{
 		GameData d = new GameData();
 		BinaryFormatter bf = new BinaryFormatter();
@@ -116,12 +114,12 @@ public class GameManager : Manager
 	}
 
 	[Serializable()]
-	public class GameData : Data
+	public class GameData
 	{
 		public PlayerData playerData;
 		public string Scene;
 		public float playTime;
-		//list of Scene dahta , which in turn contain flag data in their scenes, and unit data of the units in the scene. 
+		//list of Scene data , which in turn contain flag data in their scenes, and unit data of the units in the scene. 
 	}
 	 
 }

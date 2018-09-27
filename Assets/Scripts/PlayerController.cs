@@ -31,8 +31,10 @@ public class PlayerController : MonoBehaviour
 
 	int xAxis;
 	int yAxis;
-	float FaceX;
-	float FaceY;
+	[HideInInspector]
+	public float FaceX;
+	[HideInInspector]
+	public float FaceY;
 
 	BoxCollider2D col;
 	RaycastHit2D[] hits;

@@ -163,7 +163,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -241,7 +241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -512,7 +512,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -951,6 +951,7 @@ GameObject:
   - component: {fileID: 1778124308}
   - component: {fileID: 1778124307}
   - component: {fileID: 1778124306}
+  - component: {fileID: 1778124309}
   m_Layer: 5
   m_Name: InputField
   m_TagString: Untagged
@@ -1076,6 +1077,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1778124304}
   m_CullTransparentMesh: 0
+--- !u!114 &1778124309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778124304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18c11aec94e43cf4a98c78b01bfa1c4b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  target: {fileID: 822546133}
 --- !u!1 &1921158265
 GameObject:
   m_ObjectHideFlags: 0
@@ -1404,8 +1418,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 1428733469350372, guid: 67face2b9a15d674e969131602379aec, type: 3}
-  player: {fileID: 1428733469350372, guid: 67face2b9a15d674e969131602379aec, type: 3}
-  path: Save1
+  path: Gg
   loadOnStart: 0
   autoLoadPlayer: 0
   gameData:
@@ -1419,7 +1432,7 @@ MonoBehaviour:
       level: 0
     Scene: 
     playTime: 0
-  newGameDirectory: 
+  newGameDirectory: New Game
   UIAnim: {fileID: 0}
   fadeInTime: 0
 --- !u!4 &2072325069
