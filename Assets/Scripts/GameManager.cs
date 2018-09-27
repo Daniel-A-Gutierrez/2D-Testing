@@ -119,6 +119,13 @@ public class GameManager : MonoBehaviour
 		public PlayerData playerData;
 		public string Scene;
 		public float playTime;
+
+		public GameData()
+		{
+			playerData = new PlayerData();
+			Scene = "";
+			playTime = 0;
+		}
 		//list of Scene data , which in turn contain flag data in their scenes, and unit data of the units in the scene. 
 	}
 	 
